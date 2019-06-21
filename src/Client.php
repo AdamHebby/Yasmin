@@ -351,7 +351,7 @@ class Client implements \CharlotteDunois\Events\EventEmitterInterface, \Serializ
         \CharlotteDunois\Yasmin\Models\ClientBase::$serializeClient = $this;
         $this->loop = \React\EventLoop\Factory::create();
         
-        $this->shards = new \CharlotteDunois\Yasmin\Utils\Collection();
+        $this->shards = new \CharlotteDunois\Collect\Collection();
         
         $vars = \unserialize($vars);
         
