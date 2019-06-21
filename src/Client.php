@@ -262,28 +262,7 @@ class Client implements \CharlotteDunois\Events\EventEmitterInterface, \Serializ
         
         // ONLY use this if you know to 100% the consequences and know what you are doing
         if(($options['internal.ws.disable'] ?? false) !== true) {
-            // ONLY use this if you know to 100% the consequences and know what you are doing
-            if(!empty($options['internal.ws.instance'])) {
-                if(\is_string($options['internal.ws.instance'])) {
-                    $ws = $options['internal.ws.instance'];
-                    $this->ws = new $ws($this);
-                } else {
-                    $this->ws = $options['internal.ws.instance'];
-                }
-            } else {
-                $this->ws = new \CharlotteDunois\Yasmin\WebSocket\WSManager($this);
-            }
-            
-            $this->ws->on('ready', function () {
-                $this->readyTimestamp = \time();
-                $this->emit('ready');
-            });
-            
-            $this->ws->once('ready', function () {
-                while([ $event, $args ] = \array_shift($this->eventsQueue)) {
-                    $this->emit($event, ...$args);
-                }
-            });
+            $this->setupWebSocket($options['internal.ws.instance'] ?? []);
         }
         
         $this->checkOptionsStorages();
@@ -372,10 +351,16 @@ class Client implements \CharlotteDunois\Events\EventEmitterInterface, \Serializ
         \CharlotteDunois\Yasmin\Models\ClientBase::$serializeClient = $this;
         $this->loop = \React\EventLoop\Factory::create();
         
+        $this->shards = new \CharlotteDunois\Yasmin\Utils\Collection();
+        
         $vars = \unserialize($vars);
         
         foreach($vars as $name => $val) {
             $this->$name = $val;
+        }
+        
+        if(($this->options['internal.ws.disable'] ?? false) !== true) {
+            $this->setupWebSocket($this->options['internal.ws.instance'] ?? []);
         }
         
         if(!empty($this->options['internal.api.instance'])) {
@@ -1068,6 +1053,36 @@ class Client implements \CharlotteDunois\Events\EventEmitterInterface, \Serializ
                 $this->options['internal.storages.'.$name] = $base;
             }
         }
+    }
+    
+    /**
+     * Setup the websocket, assumes internal.qs.disable is not true
+     * @param array $instance
+     * @return void
+     */
+    protected function setupWebSocket(array $instance) {
+        // ONLY use this if you know to 100% the consequences and know what you are doing
+        if(!empty($instance)) {
+            if(\is_string($instance)) {
+                $ws = $instance;
+                $this->ws = new $ws($this);
+            } else {
+                $this->ws = $instance;
+            }
+        } else {
+            $this->ws = new \CharlotteDunois\Yasmin\WebSocket\WSManager($this);
+        }
+        
+        $this->ws->on('ready', function () {
+            $this->readyTimestamp = \time();
+            $this->emit('ready');
+        });
+        
+        $this->ws->once('ready', function () {
+            while([ $event, $args ] = \array_shift($this->eventsQueue)) {
+                $this->emit($event, ...$args);
+            }
+        });
     }
     
     /**
