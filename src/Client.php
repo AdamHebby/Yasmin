@@ -361,7 +361,7 @@ class Client implements \CharlotteDunois\Events\EventEmitterInterface, \Serializ
         
         // ONLY use this if you know to 100% the consequences and know what you are doing
         if(($this->options['internal.ws.disable'] ?? false) !== true) {
-            $this->setupWebSocket($this->options['internal.ws.instance'] ?? []);
+            $this->setupWebSocket($this->options['internal.ws.instance'] ?? null);
         }
         
         if(!empty($this->options['internal.api.instance'])) {
@@ -1058,10 +1058,10 @@ class Client implements \CharlotteDunois\Events\EventEmitterInterface, \Serializ
     
     /**
      * Setup the websocket, assumes internal.qs.disable is not true
-     * @param array $instance
+     * @param null|string|\CharlotteDunois\Yasmin\WebSocket\WSManager $instance
      * @return void
      */
-    protected function setupWebSocket(array $instance) {
+    protected function setupWebSocket($instance) {
         if(!empty($instance)) {
             if(\is_string($instance)) {
                 $ws = $instance;
