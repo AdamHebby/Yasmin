@@ -262,7 +262,7 @@ class Client implements \CharlotteDunois\Events\EventEmitterInterface, \Serializ
         
         // ONLY use this if you know to 100% the consequences and know what you are doing
         if(($options['internal.ws.disable'] ?? false) !== true) {
-            $this->setupWebSocket($options['internal.ws.instance'] ?? []);
+            $this->setupWebSocket($options['internal.ws.instance'] ?? null);
         }
         
         $this->checkOptionsStorages();
