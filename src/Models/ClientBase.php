@@ -22,6 +22,12 @@ abstract class ClientBase extends Base {
     protected $client;
     
     /**
+     * The client which will be used to unserialize.
+     * @var \CharlotteDunois\Yasmin\Client|null
+     */
+    public static $serializeClient;
+    
+    /**
      * @internal
      */
     function __construct(\CharlotteDunois\Yasmin\Client $client) {
@@ -81,6 +87,12 @@ abstract class ClientBase extends Base {
      * @internal
      */
     function unserialize($data) {
+        if(self::$serializeClient === null) {
+            throw new \Exception('Unable to unserialize a class without ClientBase::$serializeClient being set');
+        }
+        
         parent::unserialize($data);
+        
+        $this->client = self::$serializeClient;
     }
 }
