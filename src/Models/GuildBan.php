@@ -5,7 +5,7 @@
  *
  * Website: https://charuru.moe
  * License: https://github.com/CharlotteDunois/Yasmin/blob/master/LICENSE
-*/
+ */
 
 namespace CharlotteDunois\Yasmin\Models;
 
@@ -16,56 +16,65 @@ namespace CharlotteDunois\Yasmin\Models;
  * @property \CharlotteDunois\Yasmin\Models\User   $user    The banned user.
  * @property string|null                           $reason  The ban reason, or null.
  */
-class GuildBan extends ClientBase {
+class GuildBan extends ClientBase
+{
     /**
      * The guild this ban is from.
+     *
      * @var \CharlotteDunois\Yasmin\Models\Guild
      */
     protected $guild;
-    
+
     /**
      * The banned user.
+     *
      * @var \CharlotteDunois\Yasmin\Models\User
      */
     protected $user;
-    
+
     /**
      * The ban reason, or null.
+     *
      * @var string|null
      */
     protected $reason;
-    
+
     /**
      * @internal
      */
-    function __construct(\CharlotteDunois\Yasmin\Client $client, \CharlotteDunois\Yasmin\Models\Guild $guild, \CharlotteDunois\Yasmin\Models\User $user, ?string $reason) {
+    public function __construct(\CharlotteDunois\Yasmin\Client $client, \CharlotteDunois\Yasmin\Models\Guild $guild, \CharlotteDunois\Yasmin\Models\User $user, ?string $reason)
+    {
         parent::__construct($client);
-        
+
         $this->guild = $guild;
         $this->user = $user;
         $this->reason = $reason;
     }
-    
+
     /**
      * {@inheritdoc}
-     * @return mixed
-     * @throws \RuntimeException
+     *
+     * @return   mixed
+     * @throws   \RuntimeException
      * @internal
      */
-    function __get($name) {
-        if(\property_exists($this, $name)) {
+    public function __get($name)
+    {
+        if (\property_exists($this, $name)) {
             return $this->$name;
         }
-        
+
         return parent::__get($name);
     }
-    
+
     /**
      * Unbans the user.
-     * @param string  $reason
+     *
+     * @param  string $reason
      * @return \React\Promise\ExtendedPromiseInterface
      */
-    function unban(string $reason = '') {
+    public function unban(string $reason = '')
+    {
         return $this->guild->unban($this->user, $reason);
     }
 }

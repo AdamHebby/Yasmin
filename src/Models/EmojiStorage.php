@@ -5,123 +5,138 @@
  *
  * Website: https://charuru.moe
  * License: https://github.com/CharlotteDunois/Yasmin/blob/master/LICENSE
-*/
+ */
 
 namespace CharlotteDunois\Yasmin\Models;
 
 /**
  * Emoji Storage to store emojis, utilizes Collection.
  */
-class EmojiStorage extends Storage implements \CharlotteDunois\Yasmin\Interfaces\EmojiStorageInterface {
+class EmojiStorage extends Storage implements \CharlotteDunois\Yasmin\Interfaces\EmojiStorageInterface
+{
     /**
      * The guild this storage belongs to.
+     *
      * @var \CharlotteDunois\Yasmin\Models\Guild
      */
     protected $guild;
-    
+
     /**
      * @internal
      */
-    function __construct(\CharlotteDunois\Yasmin\Client $client, ?\CharlotteDunois\Yasmin\Models\Guild $guild = null, ?array $data = null) {
+    public function __construct(\CharlotteDunois\Yasmin\Client $client, ?\CharlotteDunois\Yasmin\Models\Guild $guild = null, ?array $data = null)
+    {
         parent::__construct($client, $data);
         $this->guild = $guild;
-        
+
         $this->baseStorageArgs[] = $this->guild;
     }
-    
+
     /**
      * Resolves given data to an emoji.
-     * @param \CharlotteDunois\Yasmin\Models\Emoji|\CharlotteDunois\Yasmin\Models\MessageReaction|string|int  $emoji  string/int = emoji ID
+     *
+     * @param  \CharlotteDunois\Yasmin\Models\Emoji|\CharlotteDunois\Yasmin\Models\MessageReaction|string|int $emoji string/int = emoji ID
      * @return \CharlotteDunois\Yasmin\Models\Emoji
      * @throws \InvalidArgumentException
      */
-    function resolve($emoji) {
-        if($emoji instanceof \CharlotteDunois\Yasmin\Models\Emoji) {
+    public function resolve($emoji)
+    {
+        if ($emoji instanceof \CharlotteDunois\Yasmin\Models\Emoji) {
             return $emoji;
         }
-        
-        if($emoji instanceof \CharlotteDunois\Yasmin\Models\MessageReaction) {
+
+        if ($emoji instanceof \CharlotteDunois\Yasmin\Models\MessageReaction) {
             return $emoji->emoji;
         }
-        
-        if(\is_int($emoji)) {
+
+        if (\is_int($emoji)) {
             $emoji = (string) $emoji;
         }
-        
-        if(\is_string($emoji) && parent::has($emoji)) {
+
+        if (\is_string($emoji) && parent::has($emoji)) {
             return parent::get($emoji);
         }
-        
+
         throw new \InvalidArgumentException('Unable to resolve unknown emoji');
     }
-    
+
     /**
      * {@inheritdoc}
-     * @param string  $key
+     *
+     * @param  string $key
      * @return bool
      */
-    function has($key) {
+    public function has($key)
+    {
         return parent::has($key);
     }
-    
+
     /**
      * {@inheritdoc}
-     * @param string  $key
+     *
+     * @param  string $key
      * @return \CharlotteDunois\Yasmin\Models\Emoji|null
      */
-    function get($key) {
+    public function get($key)
+    {
         return parent::get($key);
     }
-    
+
     /**
      * {@inheritdoc}
-     * @param string                                $key
-     * @param \CharlotteDunois\Yasmin\Models\Emoji  $value
+     *
+     * @param  string                               $key
+     * @param  \CharlotteDunois\Yasmin\Models\Emoji $value
      * @return $this
      */
-    function set($key, $value) {
+    public function set($key, $value)
+    {
         parent::set($key, $value);
-        if($this !== $this->client->emojis) {
+        if ($this !== $this->client->emojis) {
             $this->client->emojis->set($key, $value);
         }
-        
+
         return $this;
     }
-    
+
     /**
      * {@inheritdoc}
-     * @param string  $key
+     *
+     * @param  string $key
      * @return $this
      */
-    function delete($key) {
+    public function delete($key)
+    {
         parent::delete($key);
-        if($this !== $this->client->emojis) {
+        if ($this !== $this->client->emojis) {
             $this->client->emojis->delete($key);
         }
-        
+
         return $this;
     }
-    
+
     /**
      * Factory to create (or retrieve existing) emojis.
-     * @param array  $data
-     * @return \CharlotteDunois\Yasmin\Models\Emoji
+     *
+     * @param    array $data
+     * @return   \CharlotteDunois\Yasmin\Models\Emoji
      * @internal
      */
-    function factory(array $data) {
-        if(parent::has($data['id'])) {
+    public function factory(array $data)
+    {
+        if (parent::has($data['id'])) {
             $emoji = parent::get($data['id']);
             $emoji->_patch($data);
             return $emoji;
         }
-        
+
         $emoji = new \CharlotteDunois\Yasmin\Models\Emoji($this->client, $this->guild, $data);
-        
-        if($emoji->id !== null) {
+
+        if ($emoji->id !== null) {
             $this->set($emoji->id, $emoji);
             $this->client->emojis->set($emoji->id, $emoji);
         }
-        
+
         return $emoji;
     }
 }
