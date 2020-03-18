@@ -5,7 +5,7 @@
  *
  * Website: https://charuru.moe
  * License: https://github.com/CharlotteDunois/Yasmin/blob/master/LICENSE
-*/
+ */
 
 namespace CharlotteDunois\Yasmin\Models;
 
@@ -14,85 +14,94 @@ namespace CharlotteDunois\Yasmin\Models;
  *
  * @property \CharlotteDunois\Yasmin\Client  $client  The client which initiated the instance.
  */
-abstract class ClientBase extends Base {
+abstract class ClientBase extends Base
+{
     /**
-     * @var \CharlotteDunois\Yasmin\Client
+     * @var      \CharlotteDunois\Yasmin\Client
      * @internal
      */
     protected $client;
-    
+
     /**
      * The client which will be used to unserialize.
+     *
      * @var \CharlotteDunois\Yasmin\Client|null
      */
     public static $serializeClient;
-    
+
     /**
      * @internal
      */
-    function __construct(\CharlotteDunois\Yasmin\Client $client) {
+    public function __construct(\CharlotteDunois\Yasmin\Client $client)
+    {
         $this->client = $client;
     }
-    
+
     /**
      * {@inheritdoc}
-     * @return mixed
+     *
+     * @return   mixed
      * @internal
      */
-    function __get($name) {
-        switch($name) {
-            case 'client':
-                return $this->client;
+    public function __get($name)
+    {
+        switch ($name) {
+        case 'client':
+            return $this->client;
             break;
         }
-        
+
         return parent::__get($name);
     }
-    
+
     /**
      * @internal
-     * @return mixed
+     * @return   mixed
      */
-    function __debugInfo() {
+    public function __debugInfo()
+    {
         $vars = \get_object_vars($this);
         unset($vars['client']);
-        
+
         return $vars;
     }
-    
+
     /**
-     * @return mixed
+     * @return   mixed
      * @internal
      */
-    function jsonSerialize() {
+    public function jsonSerialize()
+    {
         $vars = parent::jsonSerialize();
         unset($vars['client']);
-        
+
         return $vars;
     }
-    
+
     /**
-     * @return string
+     * @return   string
      * @internal
      */
-    function serialize() {
+    public function serialize()
+    {
         $vars = \get_object_vars($this);
         unset($vars['client']);
-        
+
         return \serialize($vars);
     }
-    
+
     /**
-     * @return void
+     * @return   void
      * @internal
      */
-    function unserialize($data) {
-        if(self::$serializeClient === null) {
+    public function unserialize($data)
+    {
+        if (self::$serializeClient === null) {
             throw new \Exception('Unable to unserialize a class without ClientBase::$serializeClient being set');
         }
-        
+
         parent::unserialize($data);
-        
+
         $this->client = self::$serializeClient;
     }
 }

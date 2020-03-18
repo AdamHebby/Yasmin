@@ -5,13 +5,13 @@
  *
  * Website: https://charuru.moe
  * License: https://github.com/CharlotteDunois/Yasmin/blob/master/LICENSE
-*/
+ */
 
 namespace CharlotteDunois\Yasmin\Interfaces;
 
 /**
  * Something all group direct message channels implement.
  */
-interface GroupDMChannelInterface extends DMChannelInterface {
-    
+interface GroupDMChannelInterface extends DMChannelInterface
+{
 }

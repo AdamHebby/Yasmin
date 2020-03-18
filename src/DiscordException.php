@@ -5,13 +5,13 @@
  *
  * Website: https://charuru.moe
  * License: https://github.com/CharlotteDunois/Yasmin/blob/master/LICENSE
-*/
+ */
 
 namespace CharlotteDunois\Yasmin;
 
 /**
  * Exception for Discord.
  */
-class DiscordException extends \RuntimeException {
-    
+class DiscordException extends \RuntimeException
+{
 }

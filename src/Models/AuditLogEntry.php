@@ -5,7 +5,7 @@
  *
  * Website: https://charuru.moe
  * License: https://github.com/CharlotteDunois/Yasmin/blob/master/LICENSE
-*/
+ */
 
 namespace CharlotteDunois\Yasmin\Models;
 
@@ -25,10 +25,12 @@ namespace CharlotteDunois\Yasmin\Models;
  * @property \DateTime                                                                                  $createdAt         The DateTime instance of createdTimestamp.
  * @property \CharlotteDunois\Yasmin\Models\User|null                                                   $user              The user which triggered the audit log.
  */
-class AuditLogEntry extends ClientBase {
+class AuditLogEntry extends ClientBase
+{
     /**
      * All available actions keyed under their names to their numeric values.
-     * @var int[]
+     *
+     * @var    int[]
      * @source
      */
     const ACTION_TYPES = array(
@@ -60,179 +62,207 @@ class AuditLogEntry extends ClientBase {
         'EMOJI_DELETE' => 62,
         'MESSAGE_DELETE' => 72
     );
-    
+
     /**
      * The guild audit log which this entry belongs to.
+     *
      * @var \CharlotteDunois\Yasmin\Models\AuditLog
      */
     protected $log;
-    
+
     /**
      * The ID of the audit log.
+     *
      * @var string
      */
     protected $id;
-    
+
     /**
      * Specific property changes.
+     *
      * @var array[]
      */
     protected $changes;
-    
+
     /**
      * The ID of the user which triggered the audit log.
+     *
      * @var string
      */
     protected $userID;
-    
+
     /**
      * Specific action type of this entry in its string presentation.
+     *
      * @var string
      */
     protected $actionType;
-    
+
     /**
      * The specified reason, or null.
+     *
      * @var string|null
      */
     protected $reason;
-    
+
     /**
      * When this audit log entry was created.
+     *
      * @var int
      */
     protected $createdTimestamp;
-    
+
     /**
      * Any extra data from the entry, or null.
+     *
      * @var mixed|null
      */
     protected $extra;
-    
+
     /**
      * The target of this entry, or null.
+     *
      * @var mixed|null
      */
     protected $target;
-    
+
     /**
      * @internal
      */
-    function __construct(\CharlotteDunois\Yasmin\Client $client, \CharlotteDunois\Yasmin\Models\AuditLog $log, array $entry) {
+    public function __construct(\CharlotteDunois\Yasmin\Client $client, \CharlotteDunois\Yasmin\Models\AuditLog $log, array $entry)
+    {
         parent::__construct($client);
         $this->log = $log;
-        
+
         $this->id = (string) $entry['id'];
         $this->changes = $entry['changes'] ?? array();
         $this->userID = (string) $entry['user_id'];
         $this->actionType = (\array_search($entry['action_type'], self::ACTION_TYPES, true) ?: '');
         $this->reason = \CharlotteDunois\Yasmin\Utils\DataHelpers::typecastVariable(($entry['reason'] ?? null), 'string');
-        
+
         $this->createdTimestamp = (int) \CharlotteDunois\Yasmin\Utils\Snowflake::deconstruct($this->id)->timestamp;
-        
-        if(!empty($entry['options'])) {
-            if($this->actionType === self::ACTION_TYPES['MEMBER_PRUNE']) {
+
+        if (!empty($entry['options'])) {
+            if ($this->actionType === self::ACTION_TYPES['MEMBER_PRUNE']) {
                 $this->extra = array(
                     'removed' => $entry['options']['members_removed'],
                     'days' => $entry['options']['delete_member_days']
                 );
-            } elseif($this->actionType === self::ACTION_TYPES['MESSAGE_DELETE']) {
+            } elseif ($this->actionType === self::ACTION_TYPES['MESSAGE_DELETE']) {
                 $this->extra = array(
                     'count' => $entry['options']['count'],
                     'channel' => $this->client->channels->get($entry['options']['channel_id'])
                 );
-            } elseif(!empty($entry['options']['type'])) {
-                switch($entry['options']['type']) {
-                    case 'member':
-                        $this->extra = $this->log->guild->members->get($entry['options']['id']);
-                        if($this->extra === null) {
-                            $this->extra = array('id' => $entry['options']['id']);
-                        }
+            } elseif (!empty($entry['options']['type'])) {
+                switch ($entry['options']['type']) {
+                case 'member':
+                    $this->extra = $this->log->guild->members->get($entry['options']['id']);
+                    if ($this->extra === null) {
+                        $this->extra = array('id' => $entry['options']['id']);
+                    }
                     break;
-                    case 'role':
-                        $this->extra = $this->log->guild->roles->get($entry['options']['id']);
-                        if($this->extra === null) {
-                            $this->extra = array('id' => $entry['options']['id']);
-                        }
+                case 'role':
+                    $this->extra = $this->log->guild->roles->get($entry['options']['id']);
+                    if ($this->extra === null) {
+                        $this->extra = array('id' => $entry['options']['id']);
+                    }
                     break;
                 }
             }
         }
-        
+
         $targetType = self::getTargetType($entry['action_type']);
-        
-        if($targetType === 'UNKNOWN') {
-            $this->target = \array_reduce($this->changes, function ($carry,  $el) {
-                $carry[$el['key']] = $el['new'] ?? $el['old'] ?? null;
-                return $carry;
-            }, array());
+
+        if ($targetType === 'UNKNOWN') {
+            $this->target = \array_reduce(
+                $this->changes,
+                function ($carry, $el) {
+                    $carry[$el['key']] = $el['new'] ?? $el['old'] ?? null;
+                    return $carry;
+                },
+                array()
+            );
             $this->target['id'] = $entry['target_id'] ?? null;
-        } elseif($targetType === 'USER' || $targetType === 'GUILD') {
+        } elseif ($targetType === 'USER' || $targetType === 'GUILD') {
             $method = \strtolower($targetType).'s';
             $this->target = $this->client->$method->get($entry['target_id']);
-        } elseif($targetType === 'WEBHOOK') {
+        } elseif ($targetType === 'WEBHOOK') {
             $this->target = $this->log->webhooks->get($entry['target_id']);
-        } elseif($targetType === 'INVITE') {
-            if($this->log->guild->me->permissions->has(\CharlotteDunois\Yasmin\Models\Permissions::PERMISSIONS['MANAGE_GUILD'])) {
+        } elseif ($targetType === 'INVITE') {
+            if ($this->log->guild->me->permissions->has(\CharlotteDunois\Yasmin\Models\Permissions::PERMISSIONS['MANAGE_GUILD'])) {
                 $change = null;
-                
-                foreach($this->changes as $change) {
-                    if($change['key'] === 'code') {
+
+                foreach ($this->changes as $change) {
+                    if ($change['key'] === 'code') {
                         $change = $change['new'] ?? $change['old'] ?? null;
                         break;
                     }
                 }
-                
-                if($change !== null) {
-                    $this->target = $this->log->guild->fetchInvites()->then(function ($invites) use ($change) {
-                        return $invites->first(function ($invite) use ($change) {
-                            return ($invite->code === $change);
-                        });
-                    });
+
+                if ($change !== null) {
+                    $this->target = $this->log->guild->fetchInvites()->then(
+                        function ($invites) use ($change) {
+                            return $invites->first(
+                                function ($invite) use ($change) {
+                                    return ($invite->code === $change);
+                                }
+                            );
+                        }
+                    );
                 }
             } else {
-                $this->target = \array_reduce($this->changes, function ($el, $carry) {
-                    $carry[$el['key']] = $el['new'] ?? $el['old'] ?? null;
-                    return $carry;
-                }, array());
+                $this->target = \array_reduce(
+                    $this->changes,
+                    function ($el, $carry) {
+                        $carry[$el['key']] = $el['new'] ?? $el['old'] ?? null;
+                        return $carry;
+                    },
+                    array()
+                );
             }
-        } elseif($targetType === 'MESSAGE') {
+        } elseif ($targetType === 'MESSAGE') {
             $this->target = $this->client->users->get($entry['target_id']);
         } else {
             $method = \strtolower($targetType).'s';
             $this->target = $this->log->guild->$method->get($entry['target_id']);
         }
     }
-    
+
     /**
      * {@inheritdoc}
-     * @return mixed
+     *
+     * @return   mixed
      * @internal
      */
-    function __get($name) {
-        if(\property_exists($this, $name)) {
+    public function __get($name)
+    {
+        if (\property_exists($this, $name)) {
             return $this->$name;
         }
-        
-        switch($name) {
-            case 'createdAt':
-                return \CharlotteDunois\Yasmin\Utils\DataHelpers::makeDateTime($this->createdTimestamp);
+
+        switch ($name) {
+        case 'createdAt':
+            return \CharlotteDunois\Yasmin\Utils\DataHelpers::makeDateTime($this->createdTimestamp);
             break;
-            case 'user':
-                return $this->client->users->get($this->userID);
+        case 'user':
+            return $this->client->users->get($this->userID);
             break;
         }
-        
+
         return parent::__get($name);
     }
-    
+
     /**
      * Finds the action type from the entry action.
-     * @param int  $actionType
+     *
+     * @param  int $actionType
      * @return string
      */
-    static function getActionType(int $actionType) {
-        if(\in_array($actionType, array(
+    public static function getActionType(int $actionType)
+    {
+        if (\in_array(
+            $actionType,
+            array(
             self::ACTION_TYPES['CHANNEL_CREATE'],
             self::ACTION_TYPES['CHANNEL_OVERWRITE_CREATE'],
             self::ACTION_TYPES['EMOJI_CREATE'],
@@ -240,11 +270,15 @@ class AuditLogEntry extends ClientBase {
             self::ACTION_TYPES['MEMBER_BAN_REMOVE'],
             self::ACTION_TYPES['ROLE_CREATE'],
             self::ACTION_TYPES['WEBHOOK_CREATE']
-        ))) {
+            )
+        )
+        ) {
             return 'CREATE';
         }
-        
-        if(\in_array($actionType, array(
+
+        if (\in_array(
+            $actionType,
+            array(
             self::ACTION_TYPES['CHANNEL_DELETE'],
             self::ACTION_TYPES['CHANNEL_OVERWRITE_DELETE'],
             self::ACTION_TYPES['EMOJI_DELETE'],
@@ -255,11 +289,15 @@ class AuditLogEntry extends ClientBase {
             self::ACTION_TYPES['MESSAGE_DELETE'],
             self::ACTION_TYPES['ROLE_DELETE'],
             self::ACTION_TYPES['WEBHOOK_DELETE']
-        ))) {
+            )
+        )
+        ) {
             return 'DELETE';
         }
-        
-        if(\in_array($actionType, array(
+
+        if (\in_array(
+            $actionType,
+            array(
             self::ACTION_TYPES['CHANNEL_UPDATE'],
             self::ACTION_TYPES['CHANNEL_OVERWRITE_UPDATE'],
             self::ACTION_TYPES['EMOJI_UPDATE'],
@@ -269,53 +307,58 @@ class AuditLogEntry extends ClientBase {
             self::ACTION_TYPES['MEMBER_ROLE_UPDATE'],
             self::ACTION_TYPES['ROLE_UPDATE'],
             self::ACTION_TYPES['WEBHOOK_UPDATE']
-        ))) {
+            )
+        )
+        ) {
             return 'UPDATE';
         }
 
         return 'ALL';
     }
-    
+
     /**
      * Finds the target type from the entry action.
-     * @param int $target
+     *
+     * @param  int $target
      * @return string
-     * @see \CharlotteDunois\Yasmin\Models\AuditLogEntry::TARGET_TYPES
+     * @see    \CharlotteDunois\Yasmin\Models\AuditLogEntry::TARGET_TYPES
      */
-    static function getTargetType(int $target) {
-        if($target < 10) {
+    public static function getTargetType(int $target)
+    {
+        if ($target < 10) {
             return 'GUILD';
         }
-        if($target < 20) {
+        if ($target < 20) {
             return 'CHANNEL';
         }
-        if($target < 30) {
+        if ($target < 30) {
             return 'USER';
         }
-        if($target < 40) {
+        if ($target < 40) {
             return 'ROLE';
         }
-        if($target < 50) {
+        if ($target < 50) {
             return 'INVITE';
         }
-        if($target < 60) {
+        if ($target < 60) {
             return 'WEBHOOK';
         }
-        if($target < 70) {
+        if ($target < 70) {
             return 'EMOJI';
         }
-        if($target < 80) {
+        if ($target < 80) {
             return 'MESSAGE';
         }
-        
+
         return 'UNKNOWN';
     }
-    
+
     /**
-     * @return mixed
+     * @return   mixed
      * @internal
      */
-    function jsonSerialize() {
+    public function jsonSerialize()
+    {
         return $this->id;
     }
 }

@@ -5,7 +5,7 @@
  *
  * Website: https://charuru.moe
  * License: https://github.com/CharlotteDunois/Yasmin/blob/master/LICENSE
-*/
+ */
 
 namespace CharlotteDunois\Yasmin\Models;
 
@@ -14,17 +14,20 @@ namespace CharlotteDunois\Yasmin\Models;
  *
  * @property int  $bitfield  The bitfield value.
  */
-class Permissions extends Base {
+class Permissions extends Base
+{
     /**
      * The value of the bitfield with all permissions granted.
-     * @var int
+     *
+     * @var    int
      * @source
      */
     const ALL = 2146958847;
-    
+
     /**
      * Available Permissions in Discord.
-     * @var array
+     *
+     * @var    array
      * @source
      */
     const PERMISSIONS = array(
@@ -61,152 +64,171 @@ class Permissions extends Base {
         'MANAGE_WEBHOOKS' => (1 << 29),
         'MANAGE_EMOJIS' => (1 << 30)
     );
-    
+
     /**
      * The bitfield to remove from channel overwrites to prevent wrong calculated final permissions, as they do nothing.
+     *
      * @var int
      */
     const CHANNEL_UNACCESSIBLE_PERMISSIONS = (1 << 3);
-    
+
     /**
      * The bitfield value.
+     *
      * @var int
      */
     protected $bitfield;
-    
+
     /**
      * Constructs a new instance.
-     * @param int  $permission
+     *
+     * @param int $permission
      */
-    function __construct(int $permission = 0) {
+    public function __construct(int $permission = 0)
+    {
         $this->bitfield = $permission;
     }
-    
+
     /**
      * {@inheritdoc}
-     * @return mixed
-     * @throws \RuntimeException
+     *
+     * @return   mixed
+     * @throws   \RuntimeException
      * @internal
      */
-    function __get($name) {
-        if(\property_exists($this, $name)) {
+    public function __get($name)
+    {
+        if (\property_exists($this, $name)) {
             return $this->$name;
         }
-        
+
         return parent::__get($name);
     }
-    
+
     /**
-     * @return mixed
+     * @return   mixed
      * @internal
      */
-    function jsonSerialize() {
+    public function jsonSerialize()
+    {
         return $this->bitfield;
     }
-    
+
     /**
      * Checks if a given permission is granted.
-     * @param array|int|string  $permissions
-     * @param bool              $checkAdmin
+     *
+     * @param  array|int|string $permissions
+     * @param  bool             $checkAdmin
      * @return bool
      * @throws \InvalidArgumentException
      */
-    function has($permissions, bool $checkAdmin = true) {
-        if(!\is_array($permissions)) {
+    public function has($permissions, bool $checkAdmin = true)
+    {
+        if (!\is_array($permissions)) {
             $permissions = array($permissions);
         }
-        
-        if($checkAdmin && ($this->bitfield & self::PERMISSIONS['ADMINISTRATOR']) > 0) {
+
+        if ($checkAdmin && ($this->bitfield & self::PERMISSIONS['ADMINISTRATOR']) > 0) {
             return true;
         }
-        
-        foreach($permissions as $perm) {
+
+        foreach ($permissions as $perm) {
             $perm = self::resolve($perm);
-            if(($this->bitfield & $perm) !== $perm) {
+            if (($this->bitfield & $perm) !== $perm) {
                 return false;
             }
         }
-        
+
         return true;
     }
-    
+
     /**
      * Checks if a given permission is missing.
-     * @param array|int|string  $permissions
-     * @param bool              $checkAdmin
+     *
+     * @param  array|int|string $permissions
+     * @param  bool             $checkAdmin
      * @return bool
      * @throws \InvalidArgumentException
      */
-    function missing($permissions, bool $checkAdmin = true) {
+    public function missing($permissions, bool $checkAdmin = true)
+    {
         return !$this->has($permissions, $checkAdmin);
     }
-    
+
     /**
      * Adds permissions to these ones.
-     * @param int|string  ...$permissions
+     *
+     * @param  int|string ...$permissions
      * @return $this
      * @throws \InvalidArgumentException
      */
-    function add(...$permissions) {
+    public function add(...$permissions)
+    {
         $total = 0;
-        foreach($permissions as $perm) {
+        foreach ($permissions as $perm) {
             $perm = self::resolve($perm);
             $total |= $perm;
         }
-        
+
         $this->bitfield |= $total;
         return $this;
     }
-    
+
     /**
      * Removes permissions from these ones.
-     * @param int|string  ...$permissions
+     *
+     * @param  int|string ...$permissions
      * @return $this
      * @throws \InvalidArgumentException
      */
-    function remove(...$permissions) {
+    public function remove(...$permissions)
+    {
         $total = 0;
-        foreach($permissions as $perm) {
+        foreach ($permissions as $perm) {
             $perm = self::resolve($perm);
             $total |= $perm;
         }
-        
+
         $this->bitfield &= ~$total;
         return $this;
     }
-    
+
     /**
      * Resolves a permission name to number.
-     * @param int|string  $permission
+     *
+     * @param  int|string $permission
      * @return int
      * @throws \InvalidArgumentException
      */
-    static function resolve($permission) {
-        if(\is_int($permission)) {
+    public static function resolve($permission)
+    {
+        if (\is_int($permission)) {
             return $permission;
-        } elseif(\is_string($permission) && isset(self::PERMISSIONS[$permission])) {
+        } elseif (\is_string($permission) && isset(self::PERMISSIONS[$permission])) {
             return self::PERMISSIONS[$permission];
         }
-        
+
         throw new \InvalidArgumentException('Unable to resolve unknown permission');
     }
-    
+
     /**
      * Resolves a permission number to the name. Also checks if a given name is a valid permission.
-     * @param int|string  $permission
+     *
+     * @param  int|string $permission
      * @return string
      * @throws \InvalidArgumentException
      */
-    static function resolveToName($permission) {
-        if(\is_int($permission)) {
+    public static function resolveToName($permission)
+    {
+        if (\is_int($permission)) {
             $index = \array_search($permission, self::PERMISSIONS, true);
-            if($index) {
+            if ($index) {
                 return $index;
             }
-        } elseif(\is_string($permission) && isset(self::PERMISSIONS[$permission])) {
+        } elseif (\is_string($permission) && isset(self::PERMISSIONS[$permission])) {
             return $permission;
         }
-        
+
         throw new \InvalidArgumentException('Unable to resolve unknown permission');
     }
 }

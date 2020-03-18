@@ -5,7 +5,7 @@
  *
  * Website: https://charuru.moe
  * License: https://github.com/CharlotteDunois/Yasmin/blob/master/LICENSE
-*/
+ */
 
 namespace CharlotteDunois\Yasmin\Models;
 
@@ -19,49 +19,57 @@ namespace CharlotteDunois\Yasmin\Models;
  * @property bool    $deprecated  Whether this voice region is deprecated and therefore should be avoided.
  * @property bool    $custom      Whether the region is custom.
  */
-class VoiceRegion extends ClientBase {
+class VoiceRegion extends ClientBase
+{
     /**
      * The ID of the region.
+     *
      * @var string
      */
     protected $id;
-    
+
     /**
      * The name of the region.
+     *
      * @var string
      */
     protected $name;
-    
+
     /**
      * Whether this is a VIP voice region.
+     *
      * @var bool
      */
     protected $vip;
-    
+
     /**
      * Whether this is an optimal voice region for the client user.
+     *
      * @var bool
      */
     protected $optimal;
-    
+
     /**
      * Whether this voice region is deprecated and therefore should be avoided.
+     *
      * @var bool
      */
     protected $deprecated;
-    
+
     /**
      * Whether the region is custom.
+     *
      * @var bool
      */
     protected $custom;
-    
+
     /**
      * @internal
      */
-    function __construct(\CharlotteDunois\Yasmin\Client $client, array $region) {
+    public function __construct(\CharlotteDunois\Yasmin\Client $client, array $region)
+    {
         parent::__construct($client);
-        
+
         $this->id = (string) $region['id'];
         $this->name = (string) $region['name'];
         $this->vip = (bool) $region['vip'];
@@ -69,18 +77,20 @@ class VoiceRegion extends ClientBase {
         $this->deprecated = (bool) $region['deprecated'];
         $this->custom = (bool) $region['custom'];
     }
-    
+
     /**
      * {@inheritdoc}
-     * @return mixed
-     * @throws \RuntimeException
+     *
+     * @return   mixed
+     * @throws   \RuntimeException
      * @internal
      */
-    function __get($name) {
-        if(\property_exists($this, $name)) {
+    public function __get($name)
+    {
+        if (\property_exists($this, $name)) {
             return $this->$name;
         }
-        
+
         return parent::__get($name);
     }
 }

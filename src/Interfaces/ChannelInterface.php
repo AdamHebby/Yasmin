@@ -5,7 +5,7 @@
  *
  * Website: https://charuru.moe
  * License: https://github.com/CharlotteDunois/Yasmin/blob/master/LICENSE
-*/
+ */
 
 namespace CharlotteDunois\Yasmin\Interfaces;
 
@@ -15,9 +15,10 @@ namespace CharlotteDunois\Yasmin\Interfaces;
  * @method string  getId()                Gets the channel's ID.
  * @method int     getCreatedTimestamp()  Gets the timestamp of when this channel was created.
  */
-interface ChannelInterface {
+interface ChannelInterface
+{
     /**
      * Internally patches the instance.
      */
-    function _patch(array $data);
+    public function _patch(array $data);
 }

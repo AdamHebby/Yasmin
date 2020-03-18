@@ -5,7 +5,7 @@
  *
  * Website: https://charuru.moe
  * License: https://github.com/CharlotteDunois/Yasmin/blob/master/LICENSE
-*/
+ */
 
 namespace CharlotteDunois\Yasmin\Models;
 
@@ -27,10 +27,12 @@ namespace CharlotteDunois\Yasmin\Models;
  * @property string                                      $hexColor            Returns the hex color of the role color.
  * @property \CharlotteDunois\Collect\Collection         $members             A collection of all (cached) guild members which have the role.
  */
-class Role extends ClientBase {
+class Role extends ClientBase
+{
     /**
      * The default discord role colors. Mapped by uppercase string to integer.
-     * @var array
+     *
+     * @var    array
      * @source
      */
     const DISCORD_COLORS = array(
@@ -55,125 +57,142 @@ class Role extends ClientBase {
         'LIGHT_GREY' => 12370112,
         'DARK_NAVY' => 2899536
     );
-    
+
     /**
      * The guild the role belongs to.
+     *
      * @var \CharlotteDunois\Yasmin\Models\Guild
      */
     protected $guild;
-    
+
     /**
      * The role ID.
+     *
      * @var string
      */
     protected $id;
-    
+
     /**
      * The role name.
+     *
      * @var string
      */
     protected $name;
-    
+
     /**
      * The color of the role.
+     *
      * @var int
      */
     protected $color;
-    
+
     /**
      * Whether the role gets displayed separately in the member list.
+     *
      * @var bool
      */
     protected $hoist;
-    
+
     /**
      * The position of the role in the API.
+     *
      * @var int
      */
     protected $position;
-    
+
     /**
      * The permissions of the role.
+     *
      * @var \CharlotteDunois\Yasmin\Models\Permissions
      */
     protected $permissions;
-    
+
     /**
      * Whether the role is managed by an integration.
+     *
      * @var bool
      */
     protected $managed;
-    
+
     /**
      * Whether the role is mentionable.
+     *
      * @var bool
      */
     protected $mentionable;
-    
+
     /**
      * The timestamp of when the role was created.
+     *
      * @var int
      */
     protected $createdTimestamp;
-    
+
     /**
      * @internal
      */
-    function __construct(\CharlotteDunois\Yasmin\Client $client, \CharlotteDunois\Yasmin\Models\Guild $guild, array $role) {
+    public function __construct(\CharlotteDunois\Yasmin\Client $client, \CharlotteDunois\Yasmin\Models\Guild $guild, array $role)
+    {
         parent::__construct($client);
         $this->guild = $guild;
-        
+
         $this->id = (string) $role['id'];
         $this->createdTimestamp = (int) \CharlotteDunois\Yasmin\Utils\Snowflake::deconstruct($this->id)->timestamp;
-        
+
         $this->_patch($role);
     }
-    
+
     /**
      * {@inheritdoc}
-     * @return mixed
-     * @throws \RuntimeException
+     *
+     * @return   mixed
+     * @throws   \RuntimeException
      * @internal
      */
-    function __get($name) {
-        if(\property_exists($this, $name)) {
+    public function __get($name)
+    {
+        if (\property_exists($this, $name)) {
             return $this->$name;
         }
-        
-        switch($name) {
-            case 'createdAt':
-                return \CharlotteDunois\Yasmin\Utils\DataHelpers::makeDateTime($this->createdTimestamp);
+
+        switch ($name) {
+        case 'createdAt':
+            return \CharlotteDunois\Yasmin\Utils\DataHelpers::makeDateTime($this->createdTimestamp);
             break;
-            case 'hexColor':
-                return '#'.\dechex($this->color);
+        case 'hexColor':
+            return '#'.\dechex($this->color);
             break;
-            case 'members':
-                if($this->id === $this->guild->id) {
-                    return $this->guild->members->copy();
-                }
-                
-                return $this->guild->members->filter(function ($member) {
+        case 'members':
+            if ($this->id === $this->guild->id) {
+                return $this->guild->members->copy();
+            }
+
+            return $this->guild->members->filter(
+                function ($member) {
                     return $member->roles->has($this->id);
-                });
+                }
+            );
             break;
         }
-        
+
         return parent::__get($name);
     }
-    
+
     /**
      * Compares the position from the role to the given role.
-     * @param \CharlotteDunois\Yasmin\Models\Role  $role
+     *
+     * @param  \CharlotteDunois\Yasmin\Models\Role $role
      * @return int
      */
-    function comparePositionTo(\CharlotteDunois\Yasmin\Models\Role $role) {
-        if($this->position === $role->position) {
+    public function comparePositionTo(\CharlotteDunois\Yasmin\Models\Role $role)
+    {
+        if ($this->position === $role->position) {
             return $role->id <=> $this->id;
         }
-        
+
         return $this->position <=> $role->position;
     }
-    
+
     /**
      * Edits the role with the given options. Resolves with $this.
      *
@@ -190,155 +209,192 @@ class Role extends ClientBase {
      * )
      * ```
      *
-     * @param array  $options
-     * @param string $reason
+     * @param  array  $options
+     * @param  string $reason
      * @return \React\Promise\ExtendedPromiseInterface
      * @throws \InvalidArgumentException
-     * @see \CharlotteDunois\Yasmin\Utils\DataHelpers::resolveColor()
+     * @see    \CharlotteDunois\Yasmin\Utils\DataHelpers::resolveColor()
      */
-    function edit(array $options, string $reason = '') {
-        if(empty($options)) {
+    public function edit(array $options, string $reason = '')
+    {
+        if (empty($options)) {
             throw new \InvalidArgumentException('Unable to edit role with zero information');
         }
-        
-        $data = \CharlotteDunois\Yasmin\Utils\DataHelpers::applyOptions($options, array(
+
+        $data = \CharlotteDunois\Yasmin\Utils\DataHelpers::applyOptions(
+            $options,
+            array(
             'name' => array('type' => 'string'),
             'color' => array('parse' => array(\CharlotteDunois\Yasmin\Utils\DataHelpers::class, 'resolveColor')),
             'hoist' => array('type' => 'bool'),
             'position' => array('type' => 'int'),
             'permissions' => null,
             'mentionable' => array('type' => 'bool')
+            )
+        );
+
+        return (new \React\Promise\Promise(
+            function (callable $resolve, callable $reject) use ($data, $reason) {
+                $this->client->apimanager()->endpoints->guild->modifyGuildRole($this->guild->id, $this->id, $data, $reason)->done(
+                    function () use ($resolve) {
+                        $resolve($this);
+                    },
+                    $reject
+                );
+            }
         ));
-        
-        return (new \React\Promise\Promise(function (callable $resolve, callable $reject) use ($data, $reason) {
-            $this->client->apimanager()->endpoints->guild->modifyGuildRole($this->guild->id, $this->id, $data, $reason)->done(function () use ($resolve) {
-                $resolve($this);
-            }, $reject);
-        }));
     }
-    
+
     /**
      * Deletes the role.
-     * @param string  $reason
+     *
+     * @param  string $reason
      * @return \React\Promise\ExtendedPromiseInterface
      */
-    function delete(string $reason = '') {
-        return (new \React\Promise\Promise(function (callable $resolve, callable $reject) use ($reason) {
-            $this->client->apimanager()->endpoints->guild->deleteGuildRole($this->guild->id, $this->id, $reason)->done(function () use ($resolve) {
-                $resolve();
-            }, $reject);
-        }));
+    public function delete(string $reason = '')
+    {
+        return (new \React\Promise\Promise(
+            function (callable $resolve, callable $reject) use ($reason) {
+                $this->client->apimanager()->endpoints->guild->deleteGuildRole($this->guild->id, $this->id, $reason)->done(
+                    function () use ($resolve) {
+                        $resolve();
+                    },
+                    $reject
+                );
+            }
+        ));
     }
-    
+
     /**
      * Calculates the positon of the role in the Discord client.
+     *
      * @return int
      */
-    function getCalculatedPosition() {
-        $sorted = $this->guild->roles->sortCustom(function (\CharlotteDunois\Yasmin\Models\Role $a, \CharlotteDunois\Yasmin\Models\Role $b) {
-            return $b->comparePositionTo($a);
-        });
-        
+    public function getCalculatedPosition()
+    {
+        $sorted = $this->guild->roles->sortCustom(
+            function (\CharlotteDunois\Yasmin\Models\Role $a, \CharlotteDunois\Yasmin\Models\Role $b) {
+                return $b->comparePositionTo($a);
+            }
+        );
+
         return $sorted->indexOf($this);
     }
-    
+
     /**
      * Whether the role can be edited by the client user.
+     *
      * @return bool
      */
-    function isEditable() {
-        if($this->managed) {
+    public function isEditable()
+    {
+        if ($this->managed) {
             return false;
         }
-        
+
         $member = $this->guild->me;
-        if(!$member->permissions->has(\CharlotteDunois\Yasmin\Models\Permissions::PERMISSIONS['MANAGE_ROLES'])) {
+        if (!$member->permissions->has(\CharlotteDunois\Yasmin\Models\Permissions::PERMISSIONS['MANAGE_ROLES'])) {
             return false;
         }
-        
+
         return ($member->getHighestRole()->comparePositionTo($this) > 0);
     }
-    
+
     /**
      * Set the color of the role. Resolves with $this.
-     * @param int|string  $color
-     * @param string      $reason
+     *
+     * @param  int|string $color
+     * @param  string     $reason
      * @return \React\Promise\ExtendedPromiseInterface
      * @throws \InvalidArgumentException
-     * @see \CharlotteDunois\Yasmin\Utils\DataHelpers::resolveColor()
+     * @see    \CharlotteDunois\Yasmin\Utils\DataHelpers::resolveColor()
      */
-    function setColor($color, string $reason = '') {
+    public function setColor($color, string $reason = '')
+    {
         return $this->edit(array('color' => $color), $reason);
     }
-    
+
     /**
      * Set whether or not the role should be hoisted. Resolves with $this.
-     * @param bool    $hoist
-     * @param string  $reason
+     *
+     * @param  bool   $hoist
+     * @param  string $reason
      * @return \React\Promise\ExtendedPromiseInterface
      * @throws \InvalidArgumentException
      */
-    function setHoist(bool $hoist, string $reason = '') {
+    public function setHoist(bool $hoist, string $reason = '')
+    {
         return $this->edit(array('hoist' => $hoist), $reason);
     }
-    
+
     /**
      * Set whether the role is mentionable. Resolves with $this.
-     * @param bool    $mentionable
-     * @param string  $reason
+     *
+     * @param  bool   $mentionable
+     * @param  string $reason
      * @return \React\Promise\ExtendedPromiseInterface
      * @throws \InvalidArgumentException
      */
-    function setMentionable(bool $mentionable, string $reason = '') {
+    public function setMentionable(bool $mentionable, string $reason = '')
+    {
         return $this->edit(array('mentionable' => $mentionable), $reason);
     }
-    
+
     /**
      * Set a new name for the role. Resolves with $this.
-     * @param string  $name
-     * @param string  $reason
+     *
+     * @param  string $name
+     * @param  string $reason
      * @return \React\Promise\ExtendedPromiseInterface
      * @throws \InvalidArgumentException
      */
-    function setName(string $name, string $reason = '') {
+    public function setName(string $name, string $reason = '')
+    {
         return $this->edit(array('name' => $name), $reason);
     }
-    
+
     /**
      * Set the permissions of the role. Resolves with $this.
-     * @param int|\CharlotteDunois\Yasmin\Models\Permissions  $permissions
-     * @param string                                          $reason
+     *
+     * @param  int|\CharlotteDunois\Yasmin\Models\Permissions $permissions
+     * @param  string                                         $reason
      * @return \React\Promise\ExtendedPromiseInterface
      * @throws \InvalidArgumentException
      */
-    function setPermissions($permissions, string $reason = '') {
+    public function setPermissions($permissions, string $reason = '')
+    {
         return $this->edit(array('permissions' => $permissions), $reason);
     }
-    
+
     /**
      * Set the position of the role. Resolves with $this.
-     * @param int     $position
-     * @param string  $reason
+     *
+     * @param  int    $position
+     * @param  string $reason
      * @return \React\Promise\ExtendedPromiseInterface
      * @throws \InvalidArgumentException
      */
-    function setPosition(int $position, string $reason = '') {
+    public function setPosition(int $position, string $reason = '')
+    {
         return $this->edit(array('position' => $position), $reason);
     }
-    
+
     /**
      * Automatically converts to a mention.
+     *
      * @return string
      */
-    function __toString() {
+    public function __toString()
+    {
         return '<@&'.$this->id.'>';
     }
-    
+
     /**
-     * @return void
+     * @return   void
      * @internal
      */
-    function _patch(array $role) {
+    public function _patch(array $role)
+    {
         $this->name = (string) $role['name'];
         $this->color = (int) $role['color'];
         $this->hoist = (bool) $role['hoist'];

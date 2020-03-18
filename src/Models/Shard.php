@@ -5,7 +5,7 @@
  *
  * Website: https://charuru.moe
  * License: https://github.com/CharlotteDunois/Yasmin/blob/master/LICENSE
-*/
+ */
 
 namespace CharlotteDunois\Yasmin\Models;
 
@@ -14,59 +14,67 @@ namespace CharlotteDunois\Yasmin\Models;
  *
  * @property int  $id  The shard ID.
  */
-class Shard extends ClientBase implements \Serializable {
+class Shard extends ClientBase implements \Serializable
+{
     /**
      * The shard ID.
+     *
      * @var int
      */
     protected $id;
-    
+
     /**
      * The websocket connection of this shard.
+     *
      * @var \CharlotteDunois\Yasmin\WebSocket\WSConnection
      */
     protected $ws;
-    
+
     /**
      * @internal
      */
-    function __construct(\CharlotteDunois\Yasmin\Client $client, int $shardID, \CharlotteDunois\Yasmin\WebSocket\WSConnection $connection) {
+    public function __construct(\CharlotteDunois\Yasmin\Client $client, int $shardID, \CharlotteDunois\Yasmin\WebSocket\WSConnection $connection)
+    {
         parent::__construct($client);
-        
+
         $this->id = $shardID;
         $this->ws = $connection;
     }
-    
+
     /**
      * {@inheritdoc}
-     * @return mixed
-     * @throws \RuntimeException
+     *
+     * @return   mixed
+     * @throws   \RuntimeException
      * @internal
      */
-    function __get($name) {
-        if(\property_exists($this, $name)) {
+    public function __get($name)
+    {
+        if (\property_exists($this, $name)) {
             return $this->$name;
         }
-        
+
         return parent::__get($name);
     }
-    
+
     /**
-     * @return string
+     * @return   string
      * @internal
      */
-    function serialize() {
+    public function serialize()
+    {
         $vars = \get_object_vars($this);
         unset($vars['client'], $vars['ws']);
-        
+
         return \serialize($vars);
     }
-    
+
     /**
-     * @return string
+     * @return   string
      * @internal
      */
-    function __toString() {
+    public function __toString()
+    {
         return ((string) $this->id);
     }
 }
